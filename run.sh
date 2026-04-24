@@ -48,10 +48,75 @@ ensure_node() {
 }
 
 ensure_pnpm() {
+  if command -v pnpm >/dev/null 2>&1; then
+    ok "pnpm $(pnpm -v)"
+    return
+  fi
+
+  log "pnpm not found, attempting install"
+
+  # Strategy 1: corepack (bundled with Node 16.9+). packageManager field in
+  # root package.json will drive pnpm version automatically.
+  if command -v corepack >/dev/null 2>&1; then
+    log "trying corepack enable"
+    if corepack enable 2>/dev/null; then
+      :
+    elif command -v sudo >/dev/null 2>&1 && sudo -n corepack enable 2>/dev/null; then
+      :
+    else
+      warn "corepack enable failed (needs privileges or PATH write access)"
+    fi
+    hash -r 2>/dev/null || true
+  fi
+
+  # Strategy 2: npm install -g pnpm (show errors so user can act)
+  if ! command -v pnpm >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+    log "trying npm install -g pnpm@10"
+    npm install -g pnpm@10 2>&1 | tail -5 || true
+    # npm -g may install outside PATH (e.g. /opt/node20/bin); add npm prefix bin
+    local npm_prefix
+    npm_prefix="$(npm config get prefix 2>/dev/null || true)"
+    if [ -n "$npm_prefix" ] && [ -x "$npm_prefix/bin/pnpm" ]; then
+      export PATH="$npm_prefix/bin:$PATH"
+    fi
+    hash -r 2>/dev/null || true
+
+    if ! command -v pnpm >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
+      log "npm global install needs elevated permissions; retrying with sudo"
+      sudo npm install -g pnpm@10 || true
+      hash -r 2>/dev/null || true
+    fi
+  fi
+
+  # Strategy 3: Homebrew on macOS
+  if ! command -v pnpm >/dev/null 2>&1 && command -v brew >/dev/null 2>&1; then
+    log "trying brew install pnpm"
+    brew install pnpm >/dev/null 2>&1 || true
+    hash -r 2>/dev/null || true
+  fi
+
+  # Strategy 4: standalone install script to ~/.local/share/pnpm
   if ! command -v pnpm >/dev/null 2>&1; then
-    log "pnpm not found, installing via corepack"
-    corepack enable >/dev/null 2>&1 || true
-    corepack prepare pnpm@latest --activate
+    if command -v curl >/dev/null 2>&1; then
+      log "trying standalone installer (curl pnpm.io)"
+      curl -fsSL https://get.pnpm.io/install.sh | sh - >/dev/null 2>&1 || true
+    elif command -v wget >/dev/null 2>&1; then
+      log "trying standalone installer (wget pnpm.io)"
+      wget -qO- https://get.pnpm.io/install.sh | sh - >/dev/null 2>&1 || true
+    fi
+    export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+    export PATH="$PNPM_HOME:$PATH"
+    hash -r 2>/dev/null || true
+  fi
+
+  if ! command -v pnpm >/dev/null 2>&1; then
+    printf "\n${C_RED}Could not install pnpm automatically.${C_RESET} Options:\n"
+    printf "  ${C_BOLD}corepack enable${C_RESET}                # preferred (ships with Node 16.9+)\n"
+    printf "  ${C_BOLD}sudo npm install -g pnpm@10${C_RESET}    # needs sudo for /usr/local\n"
+    printf "  ${C_BOLD}brew install pnpm${C_RESET}              # on macOS\n"
+    printf "  ${C_BOLD}curl -fsSL https://get.pnpm.io/install.sh | sh -${C_RESET}\n"
+    printf "Then re-run: ${C_BOLD}./run.sh${C_RESET}\n"
+    exit 1
   fi
   ok "pnpm $(pnpm -v)"
 }
