@@ -1,3 +1,20 @@
 Companion/frontend/node_modules
 Companion/frontend/.expo
 Companion/server/node_modules
+
+# Monorepo
+node_modules/
+dist/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Env
+.env
+.env.*
+!.env.example
