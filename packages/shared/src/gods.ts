@@ -36,8 +36,8 @@ export const GODS: Record<GodId, GodDef> = {
   },
   hephaestus: {
     id: "hephaestus",
-    maxHealth: 360,
-    baseStats: { health: 360, strength: 100, defense: 170, speed: 100, charm: -40, affinity: 0 },
+    maxHealth: 320,
+    baseStats: { health: 320, strength: 100, defense: 135, speed: 100, charm: -40, affinity: 0 },
   },
   aphrodite: {
     id: "aphrodite",
@@ -46,13 +46,13 @@ export const GODS: Record<GodId, GodDef> = {
   },
   athena: {
     id: "athena",
-    maxHealth: 260,
-    baseStats: { health: 260, strength: 150, defense: 100, speed: 120, charm: 0, affinity: 20 },
+    maxHealth: 310,
+    baseStats: { health: 310, strength: 150, defense: 110, speed: 130, charm: 0, affinity: 20 },
   },
   hades: {
     id: "hades",
-    maxHealth: 300,
-    baseStats: { health: 300, strength: 120, defense: 90, speed: 140, charm: 40, affinity: 0 },
+    maxHealth: 320,
+    baseStats: { health: 320, strength: 130, defense: 105, speed: 140, charm: 40, affinity: 0 },
   },
   poseidon: {
     id: "poseidon",

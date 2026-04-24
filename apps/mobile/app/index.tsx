@@ -46,6 +46,11 @@ export default function Home() {
         variant="secondary"
         onPress={() => router.push("/join")}
       />
+      <Button
+        label="How to play"
+        variant="secondary"
+        onPress={() => router.push("/help")}
+      />
     </Screen>
   );
 }

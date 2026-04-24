@@ -41,6 +41,13 @@ export default function Lobby() {
     const socket = connectSocket(token);
     const onState = (payload: { state: VisibleGameState }) => {
       setGameState(payload.state);
+      if (
+        payload.state &&
+        payload.state.phase !== "lobby" &&
+        payload.state.phase !== "ended"
+      ) {
+        router.replace(`/game/${code}`);
+      }
     };
     socket.on("stateUpdate", onState);
 
@@ -56,14 +63,19 @@ export default function Lobby() {
           return;
         }
         if (res.youAre) setYouAre(res.youAre.playerId, res.youAre.role);
-        if (res.state) setGameState(res.state);
+        if (res.state) {
+          setGameState(res.state);
+          if (res.state.phase !== "lobby" && res.state.phase !== "ended") {
+            router.replace(`/game/${code}`);
+          }
+        }
       })
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
 
     return () => {
       socket.off("stateUpdate", onState);
     };
-  }, [token, code, setGameState, setYouAre, loadRoom]);
+  }, [token, code, setGameState, setYouAre, loadRoom, router]);
 
   async function handleStart() {
     const socket = getSocket();

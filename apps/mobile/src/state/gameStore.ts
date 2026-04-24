@@ -1,9 +1,25 @@
+import type { CardId, GodId, Phase, StatusKey } from "@bc/shared";
 import { create } from "zustand";
 import type { Room } from "../net/api";
 
+export type VisiblePlayer = {
+  id: string;
+  name: string;
+  god: GodId | null;
+  stats: { health: number; strength: number; defense: number; speed: number; charm: number; affinity: number };
+  maxHealth: number;
+  statuses: Record<StatusKey, number>;
+  hand: CardId[] | null;
+  handSize: number;
+  points: number;
+  alive: boolean;
+  eliminatedAt: number | null;
+  pendingDraw: { cardId: CardId; diceRoll: number } | null;
+};
+
 export type VisibleGameState = {
   version: number;
-  phase: "lobby" | "godSelect" | "building" | "fighting" | "ended";
+  phase: Phase;
   turnOrder: string[];
   activePlayerIdx: number;
   round: number;
@@ -11,21 +27,8 @@ export type VisibleGameState = {
   deckSize: number;
   config: unknown;
   log: unknown[];
-  discard: string[];
-  players: Array<{
-    id: string;
-    name: string;
-    god: string | null;
-    stats: Record<string, number>;
-    maxHealth: number;
-    statuses: Record<string, number>;
-    hand: string[] | null;
-    handSize: number;
-    points: number;
-    alive: boolean;
-    eliminatedAt: number | null;
-    pendingDraw: { cardId: string; diceRoll: number } | null;
-  }>;
+  discard: CardId[];
+  players: VisiblePlayer[];
 };
 
 type GameStore = {

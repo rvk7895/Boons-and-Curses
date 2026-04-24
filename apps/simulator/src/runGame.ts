@@ -1,5 +1,5 @@
 import { applyAction, createGame, legalActions } from "@bc/engine";
-import type { CardId, GameEvent, GodId, PlayerId } from "@bc/shared";
+import type { Action, CardId, GameEvent, GodId, PlayerId } from "@bc/shared";
 import type { Strategy } from "./strategy.js";
 
 export type GameResult = {
@@ -23,7 +23,12 @@ export type GameResult = {
 
 export type RunInput = {
   seed: string;
-  playerStrategies: Array<{ id: PlayerId; name: string; strategy: Strategy }>;
+  playerStrategies: Array<{
+    id: PlayerId;
+    name: string;
+    strategy: Strategy;
+    forceGod?: GodId;
+  }>;
   maxActions?: number;
 };
 
@@ -43,17 +48,25 @@ export function runGame(input: RunInput): GameResult {
   let terminatedBy: GameResult["terminatedBy"] = "natural";
   const cap = input.maxActions ?? 5000;
 
+  const forcedGods: Record<PlayerId, GodId | undefined> = {};
+  for (const p of input.playerStrategies) forcedGods[p.id] = p.forceGod;
+
   let prevPhase = state.phase;
   let actions = 0;
   while (state.phase !== "ended" && actions < cap) {
     const activeId = state.turnOrder[state.activePlayerIdx];
-    let action;
+    let action: Action;
     if (state.phase === "godSelect") {
       const chooser = state.players.find((p) => p.god === null);
       if (!chooser) break;
       const legal = legalActions(state, chooser.id);
       if (legal.length === 0) break;
-      action = strategyById[chooser.id]!.pickAction(state, chooser.id, legal);
+      const forced = forcedGods[chooser.id];
+      if (forced) {
+        action = { kind: "selectGod", playerId: chooser.id, god: forced };
+      } else {
+        action = strategyById[chooser.id]!.pickAction(state, chooser.id, legal);
+      }
     } else {
       if (!activeId) {
         terminatedBy = "deadlock";

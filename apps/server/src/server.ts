@@ -1,5 +1,7 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
+import fastifyHelmet from "@fastify/helmet";
+import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySensible from "@fastify/sensible";
 import { loadEnv, type Env } from "./env.js";
 import { prismaPlugin } from "./plugins/prisma.js";
@@ -33,6 +35,15 @@ export async function buildServer(options: BuildOptions = {}) {
   const app = Fastify({ logger: loggerOpts });
 
   await app.register(fastifyCors, { origin: env.CORS_ORIGIN });
+  await app.register(fastifyHelmet, {
+    contentSecurityPolicy: env.NODE_ENV === "production",
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  });
+  await app.register(fastifyRateLimit, {
+    max: env.NODE_ENV === "test" ? 10000 : 120,
+    timeWindow: "1 minute",
+    skipOnError: false,
+  });
   await app.register(fastifySensible);
   await app.register(prismaPlugin, { databaseUrl: env.DATABASE_URL });
   await app.register(authPlugin, { secret: env.JWT_SECRET });

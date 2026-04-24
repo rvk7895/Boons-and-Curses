@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "sim": "node dist/index.js",
+    "balance": "node dist/balance.js",
     "dev": "tsx src/index.ts",
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
