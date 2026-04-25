@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Boons and Curses",
+    "slug": "boons-and-curses",
+    "scheme": "boonsandcurses",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.boonsandcurses.app"
+    },
+    "android": {
+      "package": "com.boonsandcurses.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "apiBaseUrl": "http://127.0.0.1:5000"
+    }
+  }
+}

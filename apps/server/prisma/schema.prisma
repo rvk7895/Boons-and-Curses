@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  deviceId    String   @unique
+  displayName String
+  email       String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  adminOfRooms Room[]            @relation("RoomAdmin")
+  memberships  RoomMembership[]
+}
+
+model Room {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  status          RoomStatus       @default(LOBBY)
+  adminId         String
+  admin           User             @relation("RoomAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+  rngSeed         String
+  maxPlayers      Int              @default(4)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  memberships     RoomMembership[]
+  snapshots       GameSnapshot[]
+  actions         ActionLog[]
+
+  @@index([status])
+}
+
+enum RoomStatus {
+  LOBBY
+  PLAYING
+  ENDED
+}
+
+model RoomMembership {
+  id        String          @id @default(cuid())
+  roomId    String
+  userId    String
+  role      MembershipRole  @default(PLAYER)
+  playerId  String
+  joinedAt  DateTime        @default(now())
+  lastSeen  DateTime        @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@unique([roomId, playerId])
+  @@index([userId])
+}
+
+enum MembershipRole {
+  PLAYER
+  SPECTATOR
+}
+
+model GameSnapshot {
+  id        String   @id @default(cuid())
+  roomId    String
+  version   Int
+  state     Json
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, version])
+  @@index([roomId])
+}
+
+model ActionLog {
+  id        String   @id @default(cuid())
+  roomId    String
+  version   Int
+  playerId  String
+  action    Json
+  events    Json
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, version])
+}

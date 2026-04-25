@@ -1,0 +1,27 @@
+{
+  "name": "@bc/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "sim": "node dist/index.js",
+    "balance": "node dist/balance.js",
+    "analyze": "node dist/cardAnalysis.js",
+    "report": "node dist/metricsReport.js",
+    "dev": "tsx src/index.ts",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@bc/engine": "workspace:*",
+    "@bc/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
