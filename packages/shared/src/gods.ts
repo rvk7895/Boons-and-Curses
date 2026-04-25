@@ -31,33 +31,33 @@ export type GodDef = {
 export const GODS: Record<GodId, GodDef> = {
   zeus: {
     id: "zeus",
-    maxHealth: 340,
-    baseStats: { health: 340, strength: 150, defense: 100, speed: 110, charm: 10, affinity: -10 },
+    maxHealth: 325,
+    baseStats: { health: 325, strength: 138, defense: 100, speed: 110, charm: 10, affinity: -10 },
   },
   hephaestus: {
     id: "hephaestus",
     maxHealth: 320,
-    baseStats: { health: 320, strength: 100, defense: 135, speed: 100, charm: -40, affinity: 0 },
+    baseStats: { health: 320, strength: 105, defense: 140, speed: 100, charm: -40, affinity: 0 },
   },
   aphrodite: {
     id: "aphrodite",
-    maxHealth: 320,
-    baseStats: { health: 320, strength: 100, defense: 100, speed: 110, charm: 50, affinity: 30 },
+    maxHealth: 318,
+    baseStats: { health: 318, strength: 102, defense: 100, speed: 110, charm: 50, affinity: 30 },
   },
   athena: {
     id: "athena",
-    maxHealth: 310,
-    baseStats: { health: 310, strength: 150, defense: 110, speed: 130, charm: 0, affinity: 20 },
+    maxHealth: 308,
+    baseStats: { health: 308, strength: 142, defense: 105, speed: 130, charm: 0, affinity: 20 },
   },
   hades: {
     id: "hades",
-    maxHealth: 320,
-    baseStats: { health: 320, strength: 130, defense: 105, speed: 140, charm: 40, affinity: 0 },
+    maxHealth: 325,
+    baseStats: { health: 325, strength: 138, defense: 110, speed: 140, charm: 40, affinity: 0 },
   },
   poseidon: {
     id: "poseidon",
     maxHealth: 300,
-    baseStats: { health: 300, strength: 100, defense: 140, speed: 100, charm: 0, affinity: 50 },
+    baseStats: { health: 300, strength: 102, defense: 125, speed: 100, charm: 0, affinity: 40 },
   },
 };
 

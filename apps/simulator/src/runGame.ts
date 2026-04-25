@@ -15,6 +15,7 @@ export type GameResult = {
     eliminatedAt: number | null;
     cardsPlayed: number;
     handAtEndOfBuilding: CardId[];
+    cardsPlayedList: CardId[];
   }>;
   cardsPlayedTally: Record<string, number>;
   totalEvents: number;
@@ -44,6 +45,8 @@ export function runGame(input: RunInput): GameResult {
   const phaseRounds = { godSelect: 0, building: 0, fighting: 0 };
   const tally: Record<string, number> = {};
   const handsAtBuildingEnd: Record<PlayerId, CardId[]> = {};
+  const cardsByPlayer: Record<PlayerId, CardId[]> = {};
+  for (const p of input.playerStrategies) cardsByPlayer[p.id] = [];
   let totalEvents = 0;
   let terminatedBy: GameResult["terminatedBy"] = "natural";
   const cap = input.maxActions ?? 5000;
@@ -84,7 +87,7 @@ export function runGame(input: RunInput): GameResult {
     actions += 1;
     totalEvents += events.length;
 
-    for (const ev of events) trackEvent(ev, tally);
+    for (const ev of events) trackEvent(ev, tally, cardsByPlayer);
 
     if (prevPhase !== state.phase) {
       if (prevPhase === "building") {
@@ -116,6 +119,7 @@ export function runGame(input: RunInput): GameResult {
         eliminatedAt: ps.eliminatedAt,
         cardsPlayed: ps.buffsPlayed.length,
         handAtEndOfBuilding: handsAtBuildingEnd[p.id] ?? [],
+        cardsPlayedList: cardsByPlayer[p.id] ?? [],
       };
     }),
     cardsPlayedTally: tally,
@@ -124,8 +128,14 @@ export function runGame(input: RunInput): GameResult {
   };
 }
 
-function trackEvent(ev: GameEvent, tally: Record<string, number>): void {
+function trackEvent(
+  ev: GameEvent,
+  tally: Record<string, number>,
+  cardsByPlayer: Record<PlayerId, CardId[]>,
+): void {
   if (ev.kind === "buffPlayed" || ev.kind === "attackPlayed") {
     tally[ev.cardId] = (tally[ev.cardId] ?? 0) + 1;
+    const list = cardsByPlayer[ev.playerId];
+    if (list) list.push(ev.cardId);
   }
 }

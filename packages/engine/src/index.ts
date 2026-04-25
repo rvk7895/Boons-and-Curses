@@ -4,9 +4,9 @@ export { computeStab, type StabResult } from "./stab.js";
 export { applyEffects, type EffectContext } from "./effects.js";
 export {
   BURN_DAMAGE_PER_TURN,
-  LAST_STAND_BLEED,
   BLACKSMITH_BURN_CHANCE,
   tickStartOfTurn,
+  consumeLastStandIfLethal,
   maybeProcBlacksmith,
 } from "./statuses.js";
 export {

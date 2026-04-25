@@ -90,8 +90,8 @@ export const CARDS: Record<CardId, CardDef> = {
     { kind: "damage", power: 10, probability: 100 },
     { kind: "applyStatusOpp", status: "burn", turns: 3, chance: 50 },
   ]),
-  HP2: buff("HP2", "HP", 20, [
-    { kind: "applyStatusSelf", status: "invulnerable", turns: 3 },
+  HP2: buff("HP2", "HP", 15, [
+    { kind: "applyStatusSelf", status: "invulnerable", turns: 1 },
   ]),
   HP3: buff("HP3", "HP", 20, [
     {
@@ -101,8 +101,8 @@ export const CARDS: Record<CardId, CardDef> = {
         { kind: "selfStat", stat: "defense", delta: 10, stabScale: true, invStabScale: false },
       ],
       otherwise: [
-        { kind: "selfStat", stat: "strength", delta: -10, stabScale: false, invStabScale: true },
-        { kind: "selfStat", stat: "defense", delta: -10, stabScale: false, invStabScale: true },
+        { kind: "selfStat", stat: "strength", delta: 5, stabScale: false, invStabScale: false },
+        { kind: "selfStat", stat: "defense", delta: 5, stabScale: false, invStabScale: false },
       ],
     },
   ]),
@@ -131,14 +131,15 @@ export const CARDS: Record<CardId, CardDef> = {
     { kind: "damage", power: 40, probability: 90 },
   ]),
   AT2: attack("AT2", "AT", 25, [
-    { kind: "damage", power: 50, probability: 100 },
+    { kind: "damage", power: 50, probability: 90 },
   ]),
   AT3: buff("AT3", "AT", 15, [
     { kind: "selfStat", stat: "defense", delta: 10, stabScale: true, invStabScale: false },
     { kind: "selfStat", stat: "speed", delta: 10, stabScale: true, invStabScale: false },
   ]),
   AT4: buff("AT4", "AT", 10, [
-    { kind: "selfStat", stat: "charm", delta: 10, stabScale: true, invStabScale: false },
+    { kind: "selfStat", stat: "charm", delta: 20, stabScale: true, invStabScale: false },
+    { kind: "selfStat", stat: "affinity", delta: 10, stabScale: false, invStabScale: false },
   ]),
 
   HD1: attack("HD1", "HD", 25, [
@@ -147,22 +148,21 @@ export const CARDS: Record<CardId, CardDef> = {
   HD2: buff("HD2", "HD", 15, [
     { kind: "selfStat", stat: "strength", delta: 15, stabScale: true, invStabScale: false },
   ]),
-  HD3: attack("HD3", "HD", 30, [
-    { kind: "damage", power: 25, probability: 100 },
-    { kind: "damage", power: 25, probability: 50 },
-    { kind: "damage", power: 25, probability: 25 },
+  HD3: attack("HD3", "HD", 25, [
+    { kind: "damage", power: 20, probability: 100 },
+    { kind: "damage", power: 20, probability: 50 },
+    { kind: "damage", power: 20, probability: 25 },
   ]),
   HD4: buff("HD4", "HD", 15, [
     { kind: "selfStat", stat: "charm", delta: 20, stabScale: true, invStabScale: false },
     { kind: "selfStat", stat: "speed", delta: 20, stabScale: true, invStabScale: false },
-    { kind: "selfStat", stat: "health", delta: -50, stabScale: false, invStabScale: true },
   ]),
 
   PS1: attack("PS1", "PS", 25, [
     { kind: "damage", power: 50, probability: 80 },
   ]),
-  PS2: attack("PS2", "PS", 30, [
-    { kind: "aoeDamage", powerDividedByOpponents: 90, probability: 100 },
+  PS2: attack("PS2", "PS", 25, [
+    { kind: "aoeDamage", powerDividedByOpponents: 50, probability: 80 },
     { kind: "clearOppStatuses" },
   ]),
   PS3: buff("PS3", "PS", 15, [

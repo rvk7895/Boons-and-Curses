@@ -9,6 +9,7 @@
     "test": "vitest run",
     "sim": "node dist/index.js",
     "balance": "node dist/balance.js",
+    "analyze": "node dist/cardAnalysis.js",
     "dev": "tsx src/index.ts",
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },

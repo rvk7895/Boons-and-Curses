@@ -2,7 +2,6 @@ import type { PlayerState } from "@bc/shared";
 import type { Rng } from "./rng.js";
 
 export const BURN_DAMAGE_PER_TURN = 10;
-export const LAST_STAND_BLEED = 5;
 export const BLACKSMITH_BURN_CHANCE = 10;
 
 export function tickStartOfTurn(player: PlayerState): number {
@@ -11,15 +10,19 @@ export function tickStartOfTurn(player: PlayerState): number {
     healthDelta -= BURN_DAMAGE_PER_TURN;
     player.statuses.burn -= 1;
   }
-  if (player.statuses.lastStand > 0) {
-    healthDelta -= LAST_STAND_BLEED;
-    player.statuses.lastStand -= 1;
-  }
   if (player.statuses.invulnerable > 0) {
     player.statuses.invulnerable -= 1;
   }
   player.stats.health += healthDelta;
   return healthDelta;
+}
+
+export function consumeLastStandIfLethal(player: PlayerState): boolean {
+  if (player.stats.health > 0) return false;
+  if (player.statuses.lastStand <= 0) return false;
+  player.stats.health = 1;
+  player.statuses.lastStand = 0;
+  return true;
 }
 
 export function maybeProcBlacksmith(

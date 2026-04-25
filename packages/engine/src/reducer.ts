@@ -14,7 +14,11 @@ import {
 import { applyEffects, type EffectContext } from "./effects.js";
 import { Rng } from "./rng.js";
 import { computeStab } from "./stab.js";
-import { maybeProcBlacksmith, tickStartOfTurn } from "./statuses.js";
+import {
+  consumeLastStandIfLethal,
+  maybeProcBlacksmith,
+  tickStartOfTurn,
+} from "./statuses.js";
 import { advanceTurn, computeFightingTurnOrder, getActivePlayer } from "./turnOrder.js";
 
 export type ReduceResult = {
@@ -326,7 +330,11 @@ function advanceToActionableFighter(
 function checkEliminations(state: GameState, events: GameEvent[]): void {
   const eliminatedThisTick: PlayerState[] = [];
   for (const p of state.players) {
-    if (p.alive && p.stats.health <= 0) {
+    if (!p.alive) continue;
+    if (p.stats.health <= 0) {
+      if (consumeLastStandIfLethal(p)) {
+        continue;
+      }
       p.alive = false;
       p.eliminatedAt = state.round;
       eliminatedThisTick.push(p);
