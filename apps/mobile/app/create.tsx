@@ -6,6 +6,7 @@ import { useAuthStore } from "../src/state/authStore";
 import { useGameStore } from "../src/state/gameStore";
 import { Button } from "../src/ui/Button";
 import { Field } from "../src/ui/Field";
+import { GoldDivider } from "../src/ui/GoldDivider";
 import { Screen } from "../src/ui/Screen";
 import { spacing, typography } from "../src/ui/theme";
 
@@ -42,18 +43,23 @@ export default function CreateRoomScreen() {
 
   return (
     <Screen scroll>
-      <Text style={typography.heading}>Create a new room</Text>
-      <Text style={typography.dim}>Invite up to 3 opponents with the room code.</Text>
-      <View style={styles.form}>
+      <View style={{ alignItems: "center", marginTop: spacing.md }}>
+        <Text style={typography.title}>FORGE A ROOM</Text>
+        <GoldDivider style={{ width: 200 }} />
+        <Text style={[typography.dim, { textAlign: "center", maxWidth: 260, marginTop: spacing.sm }]}>
+          Open a contest. Share the code with your fellow champions.
+        </Text>
+      </View>
+      <View style={{ marginTop: spacing.lg }}>
         <Field
-          label="Display name"
+          label="DISPLAY NAME"
           value={name}
           onChangeText={setName}
           autoCapitalize="none"
           maxLength={40}
         />
         <Field
-          label="Max players (2–4)"
+          label="MAX PLAYERS (2–4)"
           value={maxPlayers}
           onChangeText={(v) => setMaxPlayers(v.replace(/[^0-9]/g, ""))}
           keyboardType="number-pad"
@@ -61,11 +67,7 @@ export default function CreateRoomScreen() {
           error={error}
         />
       </View>
-      <Button label="Create room" onPress={handleCreate} loading={loading} disabled={!token} />
+      <Button label="Forge Room" onPress={handleCreate} loading={loading} disabled={!token} />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  form: { marginTop: spacing.md },
-});

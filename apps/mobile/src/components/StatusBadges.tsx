@@ -1,46 +1,45 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, radii, spacing } from "../ui/theme";
+import { colors, radii, spacing, typography } from "../ui/theme";
 
-type Status = Record<string, number>;
+const STATUS_STYLE: Record<string, { color: string; label: string }> = {
+  burn: { color: "#ee884a", label: "BURN" },
+  invulnerable: { color: "#9bd0e8", label: "INVULN" },
+  lastStand: { color: "#e3b34a", label: "LAST STAND" },
+  blacksmith: { color: "#ec97c8", label: "BLACKSMITH" },
+};
 
-export function StatusBadges({ statuses }: { statuses: Status }) {
+export function StatusBadges({ statuses }: { statuses: Record<string, number> }) {
   const active = Object.entries(statuses).filter(([, v]) => v > 0);
   if (active.length === 0) return null;
   return (
     <View style={styles.row}>
-      {active.map(([k, v]) => (
-        <View key={k} style={[styles.badge, { borderColor: colorFor(k) }]}>
-          <Text style={[styles.text, { color: colorFor(k) }]}>
-            {k.toUpperCase()} {v > 99 ? "" : `${v}t`}
-          </Text>
-        </View>
-      ))}
+      {active.map(([k, v]) => {
+        const style = STATUS_STYLE[k] ?? { color: colors.accent, label: k.toUpperCase() };
+        return (
+          <View
+            key={k}
+            style={[
+              styles.badge,
+              { borderColor: style.color, backgroundColor: `${style.color}22` },
+            ]}
+          >
+            <Text style={[typography.micro, { color: style.color }]}>
+              {style.label}
+              {v < 99 ? `  ${v}t` : ""}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
-}
-
-function colorFor(status: string): string {
-  switch (status) {
-    case "burn":
-      return "#e26a3b";
-    case "invulnerable":
-      return "#8fc8e2";
-    case "lastStand":
-      return "#e05263";
-    case "blacksmith":
-      return "#d4a14a";
-    default:
-      return colors.textDim;
-  }
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
   badge: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radii.sm,
+    paddingVertical: 3,
+    borderRadius: radii.pill,
     borderWidth: 1,
   },
-  text: { fontSize: 10, fontWeight: "700", letterSpacing: 1 },
 });

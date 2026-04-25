@@ -1,5 +1,12 @@
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { colors, radii, spacing } from "../ui/theme";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { colors, radii, spacing, typography } from "../ui/theme";
 
 type Props = {
   value: number;
@@ -9,12 +16,30 @@ type Props = {
 };
 
 export function StatBar({ value, max, label, accent = colors.accent }: Props) {
-  const pct = Math.max(0, Math.min(1, value / Math.max(1, max)));
+  const safeMax = Math.max(1, max);
+  const target = Math.max(0, Math.min(1, value / safeMax));
+  const pct = useSharedValue(target);
+
+  useEffect(() => {
+    pct.value = withTiming(target, { duration: 420 });
+  }, [target, pct]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${pct.value * 100}%`,
+  }));
+
   return (
     <View style={styles.row}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[typography.micro, styles.label]}>{label}</Text>
       <View style={styles.track}>
-        <View style={[styles.fill, { width: `${pct * 100}%`, backgroundColor: accent }]} />
+        <Animated.View style={[styles.fill, fillStyle]}>
+          <LinearGradient
+            colors={[accent, "#ffffff20", accent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
       </View>
       <Text style={styles.value}>
         {value}
@@ -25,38 +50,29 @@ export function StatBar({ value, max, label, accent = colors.accent }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  label: {
-    width: 68,
-    color: colors.textDim,
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
+  row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  label: { width: 56, color: colors.textDim },
   track: {
     flex: 1,
-    height: 10,
-    backgroundColor: colors.border,
+    height: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: radii.sm,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   fill: {
     height: "100%",
     borderRadius: radii.sm,
+    overflow: "hidden",
   },
   value: {
-    width: 76,
+    width: 90,
     textAlign: "right",
     color: colors.text,
     fontSize: 13,
     fontVariant: ["tabular-nums"],
+    fontFamily: typography.body.fontFamily,
   },
-  max: {
-    color: colors.textDim,
-  },
+  max: { color: colors.textMuted },
 });

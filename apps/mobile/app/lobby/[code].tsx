@@ -1,13 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import { getRoom, leaveRoom, type Room } from "../../src/net/api";
+import Animated, { FadeIn } from "react-native-reanimated";
+import { getRoom, leaveRoom } from "../../src/net/api";
 import { connectSocket, emitWithAck, getSocket } from "../../src/net/socket";
 import { useAuthStore } from "../../src/state/authStore";
 import { useGameStore, type VisibleGameState } from "../../src/state/gameStore";
 import { Button } from "../../src/ui/Button";
+import { GoldDivider } from "../../src/ui/GoldDivider";
 import { Screen } from "../../src/ui/Screen";
-import { colors, radii, spacing, typography } from "../../src/ui/theme";
+import { colors, elevation, radii, spacing, typography } from "../../src/ui/theme";
 
 export default function Lobby() {
   const router = useRouter();
@@ -109,7 +111,7 @@ export default function Lobby() {
   if (!room) {
     return (
       <Screen>
-        <Text style={typography.dim}>Loading room…</Text>
+        <Text style={typography.dim}>Awaiting the oracle…</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </Screen>
     );
@@ -120,23 +122,32 @@ export default function Lobby() {
 
   return (
     <Screen>
-      <View style={styles.codeRow}>
-        <Text style={typography.dim}>Invite code</Text>
+      <Animated.View entering={FadeIn.duration(400)} style={styles.codeCard}>
+        <Text style={typography.micro}>INVITE CODE</Text>
         <Text style={typography.mono}>{room.code}</Text>
+        <Text style={[typography.dim, { textAlign: "center" }]}>
+          Share this with your fellow champions.
+        </Text>
+      </Animated.View>
+
+      <View style={styles.header}>
+        <Text style={typography.heading}>
+          PLAYERS ({players.length}/{room.maxPlayers})
+        </Text>
+        <GoldDivider />
       </View>
 
-      <Text style={typography.heading}>
-        Players ({players.length}/{room.maxPlayers})
-      </Text>
       <FlatList
         data={players}
         keyExtractor={(m) => m.id}
-        renderItem={({ item }) => (
-          <MemberRow
-            name={item.displayName}
-            isAdmin={item.userId === room.adminId}
-            isYou={item.userId === user?.id}
-          />
+        renderItem={({ item, index }) => (
+          <Animated.View entering={FadeIn.delay(index * 80).duration(300)}>
+            <MemberRow
+              name={item.displayName}
+              isAdmin={item.userId === room.adminId}
+              isYou={item.userId === user?.id}
+            />
+          </Animated.View>
         )}
         ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
         style={{ flexGrow: 0 }}
@@ -144,7 +155,7 @@ export default function Lobby() {
 
       {spectators.length > 0 ? (
         <>
-          <Text style={typography.heading}>Spectators</Text>
+          <Text style={[typography.heading, { marginTop: spacing.md }]}>SPECTATORS</Text>
           <FlatList
             data={spectators}
             keyExtractor={(m) => m.id}
@@ -168,15 +179,17 @@ export default function Lobby() {
 
       {isAdmin ? (
         <Button
-          label="Start game"
+          label="Begin the Contest"
           onPress={handleStart}
           loading={starting}
           disabled={players.length < 2 || room.status !== "LOBBY"}
         />
       ) : (
-        <Text style={typography.dim}>Waiting for the admin to start…</Text>
+        <Text style={[typography.dim, { textAlign: "center" }]}>
+          Awaiting the host to begin…
+        </Text>
       )}
-      <Button label="Leave room" variant="secondary" onPress={handleLeave} />
+      <Button label="Forsake" variant="ghost" onPress={handleLeave} />
     </Screen>
   );
 }
@@ -193,38 +206,42 @@ function MemberRow({
   dim?: boolean;
 }) {
   return (
-    <View style={[styles.row, dim && { opacity: 0.7 }]}>
+    <View style={[styles.row, dim && { opacity: 0.65 }, elevation.low]}>
       <Text style={[typography.body, { flex: 1 }]}>
         {name}
-        {isYou ? "  (you)" : ""}
+        {isYou ? "  · you" : ""}
       </Text>
-      {isAdmin ? <Text style={styles.badge}>ADMIN</Text> : null}
+      {isAdmin ? <Text style={styles.badge}>HOST</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  codeCard: {
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.lg,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  header: { gap: spacing.xs, marginTop: spacing.md },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.bgElev,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: radii.md,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  codeRow: {
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    backgroundColor: colors.bgElev,
-  },
   badge: {
     color: colors.accent,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
     letterSpacing: 2,
   },
-  error: { color: colors.danger, fontSize: 13 },
+  error: { color: colors.danger, fontSize: 13, textAlign: "center" },
 });

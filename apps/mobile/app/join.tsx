@@ -6,8 +6,9 @@ import { useAuthStore } from "../src/state/authStore";
 import { useGameStore } from "../src/state/gameStore";
 import { Button } from "../src/ui/Button";
 import { Field } from "../src/ui/Field";
+import { GoldDivider } from "../src/ui/GoldDivider";
 import { Screen } from "../src/ui/Screen";
-import { spacing, typography } from "../src/ui/theme";
+import { colors, radii, spacing, typography } from "../src/ui/theme";
 
 export default function JoinRoomScreen() {
   const router = useRouter();
@@ -41,35 +42,96 @@ export default function JoinRoomScreen() {
 
   return (
     <Screen scroll>
-      <Text style={typography.heading}>Join an existing room</Text>
-      <Text style={typography.dim}>Enter the 6-character code from the host.</Text>
-      <View style={styles.form}>
+      <View style={{ alignItems: "center", marginTop: spacing.md }}>
+        <Text style={typography.title}>ENTER THE ARENA</Text>
+        <GoldDivider style={{ width: 200 }} />
+        <Text style={[typography.dim, { textAlign: "center", maxWidth: 260, marginTop: spacing.sm }]}>
+          The hosts will share a code. Six characters.
+        </Text>
+      </View>
+      <View style={{ marginTop: spacing.lg }}>
         <Field
-          label="Display name"
+          label="DISPLAY NAME"
           value={name}
           onChangeText={setName}
           autoCapitalize="none"
           maxLength={40}
         />
         <Field
-          label="Room code"
+          label="ROOM CODE"
           value={code}
           onChangeText={(v) => setCode(v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
           autoCapitalize="characters"
           maxLength={8}
+          style={styles.codeInput}
           error={error}
         />
       </View>
+
+      <View style={styles.toggle}>
+        <Text style={typography.micro}>ROLE</Text>
+        <View style={styles.toggleRow}>
+          <Pill
+            active={!spectator}
+            label="Player"
+            onPress={() => setSpectator(false)}
+          />
+          <Pill
+            active={spectator}
+            label="Spectator"
+            onPress={() => setSpectator(true)}
+          />
+        </View>
+      </View>
+
       <Button
-        label={spectator ? "Joining as spectator" : "Joining as player"}
-        variant="secondary"
-        onPress={() => setSpectator((s) => !s)}
+        label={spectator ? "Witness" : "Enter"}
+        onPress={handleJoin}
+        loading={loading}
+        disabled={!token || code.length < 4}
       />
-      <Button label="Join" onPress={handleJoin} loading={loading} disabled={!token || code.length < 4} />
     </Screen>
   );
 }
 
+function Pill({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+  return (
+    <Text
+      onPress={onPress}
+      style={[
+        styles.pill,
+        active ? styles.pillActive : null,
+      ]}
+    >
+      {label}
+    </Text>
+  );
+}
+
 const styles = StyleSheet.create({
-  form: { marginTop: spacing.md },
+  codeInput: {
+    fontFamily: "Cinzel_700Bold",
+    fontSize: 22,
+    letterSpacing: 8,
+    textAlign: "center",
+  },
+  toggle: { gap: spacing.xs, marginBottom: spacing.md },
+  toggleRow: { flexDirection: "row", gap: spacing.sm },
+  pill: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text,
+    fontFamily: "Inter_500Medium",
+    overflow: "hidden",
+    textAlign: "center",
+  },
+  pillActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+    color: colors.accentText,
+    fontFamily: "Inter_700Bold",
+  },
 });

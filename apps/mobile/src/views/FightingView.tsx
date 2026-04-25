@@ -1,14 +1,17 @@
 import { CARDS, type CardId } from "@bc/shared";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { sendAction } from "../net/actions";
-import { useGameStore } from "../state/gameStore";
-import { Button } from "../ui/Button";
-import { colors, radii, spacing, typography } from "../ui/theme";
+import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { Card } from "../components/Card";
+import { GodPortrait } from "../components/GodPortrait";
 import { StatBar } from "../components/StatBar";
 import { StatusBadges } from "../components/StatusBadges";
 import { TurnQueue } from "../components/TurnQueue";
+import { sendAction } from "../net/actions";
+import { useGameStore } from "../state/gameStore";
+import { Button } from "../ui/Button";
+import { GoldDivider } from "../ui/GoldDivider";
+import { colors, elevation, godPalette, radii, spacing, typography } from "../ui/theme";
 
 export function FightingView() {
   const state = useGameStore((s) => s.state);
@@ -80,118 +83,170 @@ export function FightingView() {
   return (
     <ScrollView contentContainerStyle={styles.root}>
       <View style={styles.topBar}>
-        <Text style={typography.heading}>Combat</Text>
-        <Text style={typography.dim}>Round {state.round}</Text>
+        <View>
+          <Text style={typography.micro}>COMBAT</Text>
+          <Text style={typography.title}>Round {state.round}</Text>
+        </View>
+        {isMyTurn ? (
+          <View style={styles.yourTurnPill}>
+            <Text style={[typography.micro, { color: colors.accentText }]}>YOUR TURN</Text>
+          </View>
+        ) : null}
       </View>
 
       <TurnQueue entries={queueEntries} />
 
-      {state.players.map((p) => (
-        <View
-          key={p.id}
-          style={[
-            styles.playerCard,
-            selectedTarget === p.id && { borderColor: colors.accent },
-            !p.alive && { opacity: 0.4 },
-          ]}
-        >
-          <View style={styles.playerHead}>
-            <Text style={styles.playerName}>
-              {p.name}
-              {p.id === myPlayerId ? " (you)" : ""}
-              {!p.alive ? " — defeated" : ""}
-            </Text>
-            <Text style={typography.dim}>{p.god ?? "?"}</Text>
-          </View>
-          <StatBar value={Math.max(0, p.stats.health)} max={p.maxHealth || 1} label="HP" />
-          <View style={styles.miniStats}>
-            <Text style={styles.mini}>STR {p.stats.strength}</Text>
-            <Text style={styles.mini}>DEF {p.stats.defense}</Text>
-            <Text style={styles.mini}>SPD {p.stats.speed}</Text>
-            <Text style={styles.mini}>AFF {p.stats.affinity}</Text>
-          </View>
-          <StatusBadges statuses={p.statuses} />
-          {isMyTurn && needsTarget && p.id !== myPlayerId && p.alive ? (
-            <Pressable
-              onPress={() => setSelectedTarget(p.id)}
-              style={[
-                styles.targetPill,
-                selectedTarget === p.id && { backgroundColor: colors.accent },
-              ]}
-            >
-              <Text
-                style={{
-                  color: selectedTarget === p.id ? colors.accentText : colors.text,
-                  fontWeight: "600",
-                }}
+      {state.players.map((p, i) => {
+        const pal = p.god ? godPalette[p.god] ?? godPalette.zeus! : godPalette.zeus!;
+        const isTarget = selectedTarget === p.id;
+        return (
+          <Animated.View
+            key={p.id}
+            entering={FadeInUp.delay(i * 60).duration(300)}
+            style={[
+              styles.playerCard,
+              elevation.low,
+              { borderColor: isTarget ? colors.accent : pal.primary + "44" },
+              !p.alive && { opacity: 0.4 },
+              isTarget && elevation.glow,
+            ]}
+          >
+            <View style={styles.playerHead}>
+              {p.god ? <GodPortrait god={p.god} size={48} /> : null}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.playerName}>
+                  {p.name}
+                  {p.id === myPlayerId ? " · you" : ""}
+                  {!p.alive ? " · fallen" : ""}
+                </Text>
+                <Text style={typography.dim}>{(p.god ?? "—").toUpperCase()}</Text>
+              </View>
+            </View>
+            <StatBar
+              value={Math.max(0, p.stats.health)}
+              max={p.maxHealth || 1}
+              label="HP"
+              accent={pal.primary}
+            />
+            <View style={styles.miniStats}>
+              <Mini label="STR" v={p.stats.strength} />
+              <Mini label="DEF" v={p.stats.defense} />
+              <Mini label="SPD" v={p.stats.speed} />
+              <Mini label="AFF" v={p.stats.affinity} />
+            </View>
+            <StatusBadges statuses={p.statuses} />
+            {isMyTurn && needsTarget && p.id !== myPlayerId && p.alive ? (
+              <Pressable
+                onPress={() => setSelectedTarget(p.id)}
+                style={[styles.targetPill, isTarget && styles.targetPillActive]}
               >
-                {selectedTarget === p.id ? "Target" : "Select target"}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ))}
+                <Text
+                  style={{
+                    color: isTarget ? colors.accentText : colors.text,
+                    fontFamily: "Inter_700Bold",
+                    letterSpacing: 1,
+                  }}
+                >
+                  {isTarget ? "TARGETED" : "Mark target"}
+                </Text>
+              </Pressable>
+            ) : null}
+          </Animated.View>
+        );
+      })}
 
       {myRole === "PLAYER" && me?.hand && me.alive ? (
         <>
-          <Text style={[typography.heading, { marginTop: spacing.md }]}>Your hand</Text>
+          <Text style={[typography.heading, { marginTop: spacing.md }]}>YOUR HAND</Text>
+          <GoldDivider />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hand}>
             {me.hand.map((id, i) => (
-              <Card
-                key={`${id}-${i}`}
-                id={id}
-                selected={selectedCard === id}
-                onPress={() => setSelectedCard(id === selectedCard ? null : id)}
-                style={{ marginRight: spacing.xs }}
-              />
+              <Animated.View key={`${id}-${i}`} entering={FadeIn.delay(80 * i)}>
+                <Card
+                  id={id}
+                  selected={selectedCard === id}
+                  onPress={() => setSelectedCard(id === selectedCard ? null : id)}
+                  style={{ marginRight: spacing.xs }}
+                />
+              </Animated.View>
             ))}
             {me.hand.length === 0 ? (
-              <Text style={typography.dim}>No attack cards — must pass.</Text>
+              <Text style={[typography.dim, { padding: spacing.md }]}>
+                No attack cards in hand. You must pass.
+              </Text>
             ) : null}
           </ScrollView>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           {isMyTurn ? (
             me.hand.length === 0 ? (
-              <Button label="Pass turn" onPress={pass} loading={busy} />
+              <Button label="Pass" onPress={pass} loading={busy} />
             ) : (
-              <Button label="Play" onPress={play} loading={busy} disabled={!canPlay} />
+              <Button
+                label={canPlay ? "Strike" : needsTarget ? "Mark a target" : "Select a card"}
+                onPress={play}
+                loading={busy}
+                disabled={!canPlay}
+              />
             )
           ) : (
-            <Text style={typography.dim}>Waiting for your turn…</Text>
+            <Text style={[typography.dim, { textAlign: "center" }]}>
+              Awaiting your turn…
+            </Text>
           )}
         </>
       ) : null}
-
-      {opponents.length === 0 ? (
-        <Text style={typography.dim}>No opponents remain.</Text>
-      ) : null}
     </ScrollView>
+  );
+}
+
+function Mini({ label, v }: { label: string; v: number }) {
+  return (
+    <View style={styles.miniBlock}>
+      <Text style={[typography.micro, { color: colors.textMuted }]}>{label}</Text>
+      <Text style={styles.miniVal}>{v}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
   topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  yourTurnPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accent,
+  },
   playerCard: {
     padding: spacing.md,
     borderRadius: radii.md,
-    backgroundColor: colors.bgElev,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 2,
-    borderColor: colors.border,
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
-  playerHead: { flexDirection: "row", justifyContent: "space-between" },
-  playerName: { color: colors.text, fontSize: 15, fontWeight: "700" },
-  miniStats: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  mini: { color: colors.textDim, fontSize: 12, fontVariant: ["tabular-nums"] },
+  playerHead: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  playerName: { color: colors.text, fontSize: 15, fontFamily: typography.heading.fontFamily },
+  miniStats: { flexDirection: "row", gap: spacing.md, flexWrap: "wrap" },
+  miniBlock: { gap: 2 },
+  miniVal: {
+    color: colors.text,
+    fontSize: 14,
+    fontVariant: ["tabular-nums"],
+    fontFamily: typography.body.fontFamily,
+  },
   targetPill: {
-    marginTop: spacing.xs,
     alignSelf: "flex-start",
     paddingVertical: 6,
     paddingHorizontal: spacing.md,
-    borderRadius: radii.sm,
-    backgroundColor: colors.border,
+    borderRadius: radii.pill,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  hand: { gap: spacing.xs },
+  targetPillActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accentHi,
+  },
+  hand: { gap: spacing.xs, paddingVertical: spacing.sm },
   error: { color: colors.danger, fontSize: 13 },
 });

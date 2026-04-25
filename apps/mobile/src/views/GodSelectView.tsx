@@ -1,42 +1,44 @@
 import { GOD_IDS, type GodId } from "@bc/shared";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import { GodPortrait } from "../components/GodPortrait";
 import { sendAction } from "../net/actions";
-import { useAuthStore } from "../state/authStore";
 import { useGameStore } from "../state/gameStore";
 import { Button } from "../ui/Button";
-import { colors, radii, spacing, typography } from "../ui/theme";
+import { GoldDivider } from "../ui/GoldDivider";
+import { colors, godPalette, radii, spacing, typography } from "../ui/theme";
 
 const GOD_LORE: Record<GodId, { tag: string; blurb: string; stats: string }> = {
   zeus: {
     tag: "King of Olympus",
-    blurb: "Versatile storm-bringer with strong balance across strength, speed, and health.",
-    stats: "HP 340 / STR 150 / DEF 100 / SPD 110",
+    blurb: "Storm-bringer. Balanced strength, speed, and health.",
+    stats: "HP 325 · STR 138 · SPD 110",
   },
   hephaestus: {
-    tag: "Forge master",
-    blurb: "The tank. Highest HP and defense; burns attackers over time.",
-    stats: "HP 360 / DEF 170 / SPD 100",
+    tag: "Forge Master",
+    blurb: "The tank. Highest defense; burns attackers over time.",
+    stats: "HP 320 · DEF 140 · SPD 100",
   },
   aphrodite: {
-    tag: "Goddess of love",
-    blurb: "Charm and affinity specialist; manipulates damage modifiers via affinity.",
-    stats: "HP 320 / CHM 50 / AFF 30",
+    tag: "Goddess of Love",
+    blurb: "Charm and affinity manipulator.",
+    stats: "HP 318 · CHM 50 · AFF 30",
   },
   athena: {
     tag: "Strategist",
-    blurb: "Glass-cannon-lite; high strength and speed with low HP.",
-    stats: "HP 260 / STR 150 / SPD 120",
+    blurb: "Glass-cannon. High strength and speed; lower HP.",
+    stats: "HP 308 · STR 142 · SPD 130",
   },
   hades: {
-    tag: "Lord of the dead",
-    blurb: "Fastest; variable-damage gambler cards and speed buffs.",
-    stats: "HP 300 / SPD 140 / STR 120",
+    tag: "Lord of the Dead",
+    blurb: "Fastest. Variable-damage gambler cards.",
+    stats: "HP 325 · SPD 140 · STR 138",
   },
   poseidon: {
-    tag: "Storm of the sea",
-    blurb: "Defensive with highest affinity; AoE finisher PS2.",
-    stats: "HP 300 / DEF 140 / AFF 50",
+    tag: "Storm of the Sea",
+    blurb: "Defensive control with the AoE finisher PS2.",
+    stats: "HP 300 · DEF 125 · AFF 40",
   },
 };
 
@@ -68,46 +70,73 @@ export function GodSelectView() {
   }
 
   if (myRole !== "PLAYER") {
-    return <SpectatorWait state={state} />;
+    const chosen = state?.players.filter((p) => p.god).length ?? 0;
+    return (
+      <View style={styles.root}>
+        <Text style={typography.title}>SPECTATING</Text>
+        <Text style={typography.dim}>
+          Champions choose their patrons ({chosen}/{totalPlayers})…
+        </Text>
+      </View>
+    );
   }
 
   return (
     <View style={styles.root}>
-      <Text style={typography.heading}>Choose your patron god</Text>
-      <Text style={typography.dim}>
-        {otherPicks}/{totalPlayers} players have chosen
-      </Text>
+      <View style={styles.header}>
+        <Text style={typography.title}>CHOOSE YOUR PATRON</Text>
+        <GoldDivider style={{ width: 200, alignSelf: "center" }} />
+        <Text style={[typography.dim, { textAlign: "center" }]}>
+          {otherPicks}/{totalPlayers} have chosen
+        </Text>
+      </View>
+
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.grid}>
-        {GOD_IDS.map((g) => {
+        {GOD_IDS.map((g, i) => {
           const taken = state?.players.some((p) => p.god === g);
           const isChoice = choice === g;
+          const lore = GOD_LORE[g];
+          const pal = godPalette[g] ?? godPalette.zeus!;
           return (
-            <Pressable
-              key={g}
-              disabled={alreadyChosen}
-              onPress={() => setChoice(g)}
-              style={[
-                styles.godCard,
-                isChoice && { borderColor: colors.accent },
-                taken && { opacity: 0.45 },
-              ]}
-            >
-              <Text style={styles.godName}>{g.toUpperCase()}</Text>
-              <Text style={styles.godTag}>{GOD_LORE[g].tag}</Text>
-              <Text style={styles.godBlurb}>{GOD_LORE[g].blurb}</Text>
-              <Text style={styles.godStats}>{GOD_LORE[g].stats}</Text>
-            </Pressable>
+            <Animated.View key={g} entering={FadeInDown.delay(i * 70).duration(400)}>
+              <Pressable
+                disabled={alreadyChosen}
+                onPress={() => setChoice(g)}
+                style={[
+                  styles.godCard,
+                  {
+                    borderColor: isChoice ? pal.primary : colors.border,
+                    backgroundColor: isChoice ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
+                  },
+                  taken && { opacity: 0.45 },
+                ]}
+              >
+                <GodPortrait god={g} size={88} ring={isChoice} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[typography.heading, { color: pal.primary, letterSpacing: 2 }]}>
+                    {g.toUpperCase()}
+                  </Text>
+                  <Text style={[typography.dim, { fontStyle: "italic" }]}>{lore.tag}</Text>
+                  <Text style={[typography.body, { marginTop: spacing.xs }]}>{lore.blurb}</Text>
+                  <Text style={[typography.micro, { marginTop: spacing.xs }]}>{lore.stats}</Text>
+                </View>
+              </Pressable>
+            </Animated.View>
           );
         })}
       </ScrollView>
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {alreadyChosen ? (
-        <Text style={typography.dim}>
-          You picked {myPlayer?.god?.toUpperCase()}. Waiting for the rest…
-        </Text>
+        <Animated.Text
+          entering={FadeIn}
+          style={[typography.dim, { textAlign: "center", marginBottom: spacing.sm }]}
+        >
+          You serve {myPlayer?.god?.toUpperCase()}. Awaiting the others…
+        </Animated.Text>
       ) : (
         <Button
-          label={choice ? `Confirm ${choice.toUpperCase()}` : "Select a god"}
+          label={choice ? `Pledge to ${choice.toUpperCase()}` : "Choose a God"}
           disabled={!choice}
           loading={submitting}
           onPress={confirm}
@@ -117,36 +146,17 @@ export function GodSelectView() {
   );
 }
 
-function SpectatorWait({ state }: { state: ReturnType<typeof useGameStore.getState>["state"] }) {
-  const chosen = state?.players.filter((p) => p.god).length ?? 0;
-  const total = state?.players.length ?? 0;
-  return (
-    <View style={styles.root}>
-      <Text style={typography.heading}>Spectating</Text>
-      <Text style={typography.dim}>Players choosing gods ({chosen}/{total})…</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1, gap: spacing.md },
+  header: { gap: spacing.xs },
   grid: { gap: spacing.sm, paddingBottom: spacing.lg },
   godCard: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: spacing.md,
     borderRadius: radii.md,
     borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.bgElev,
-    gap: 4,
+    gap: spacing.md,
   },
-  godName: { color: colors.accent, fontWeight: "800", fontSize: 18, letterSpacing: 2 },
-  godTag: { color: colors.textDim, fontSize: 12, fontStyle: "italic" },
-  godBlurb: { color: colors.text, fontSize: 14 },
-  godStats: {
-    color: colors.textDim,
-    fontSize: 11,
-    fontVariant: ["tabular-nums"],
-    marginTop: 4,
-  },
-  error: { color: colors.danger, fontSize: 13 },
+  error: { color: colors.danger, fontSize: 13, textAlign: "center" },
 });

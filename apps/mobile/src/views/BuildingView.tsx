@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
+import { Card } from "../components/Card";
+import { Die } from "../components/Die";
+import { GodPortrait } from "../components/GodPortrait";
+import { StatBar } from "../components/StatBar";
+import { StatusBadges } from "../components/StatusBadges";
 import { sendAction } from "../net/actions";
 import { useGameStore, type VisiblePlayer } from "../state/gameStore";
 import { Button } from "../ui/Button";
-import { colors, radii, spacing, typography } from "../ui/theme";
-import { Card } from "../components/Card";
-import { Die } from "../components/Die";
-import { StatBar } from "../components/StatBar";
-import { StatusBadges } from "../components/StatusBadges";
+import { GoldDivider } from "../ui/GoldDivider";
+import { colors, elevation, godPalette, radii, spacing, typography } from "../ui/theme";
 
 export function BuildingView() {
   const state = useGameStore((s) => s.state);
@@ -40,25 +43,31 @@ export function BuildingView() {
   return (
     <ScrollView contentContainerStyle={styles.root}>
       <View style={styles.topBar}>
-        <Text style={typography.heading}>Building</Text>
-        <Text style={typography.dim}>
-          Deck: {state.deckSize} · Round {state.round}
-        </Text>
+        <View>
+          <Text style={typography.micro}>BUILDING PHASE</Text>
+          <Text style={typography.title}>Round {state.round}</Text>
+        </View>
+        <View style={styles.deckPill}>
+          <Text style={typography.micro}>DECK</Text>
+          <Text style={typography.heading}>{state.deckSize}</Text>
+        </View>
       </View>
 
-      <View style={styles.turnBanner}>
+      <Animated.View entering={FadeIn.duration(300)} style={styles.turnBanner}>
         <Text style={typography.dim}>
-          {isMyTurn ? "Your turn" : `Waiting on ${active?.name ?? "…"}`}
+          {isMyTurn ? "Your turn." : `Awaiting ${active?.name ?? "…"}.`}
         </Text>
-      </View>
+      </Animated.View>
 
       {isMyTurn && myDraw ? (
-        <View style={styles.drawSection}>
-          <View style={styles.diceRow}>
-            <Text style={typography.dim}>Dice</Text>
+        <Animated.View entering={FadeInDown.duration(400)} style={[styles.drawSection, elevation.high]}>
+          <View style={styles.drawHeader}>
+            <Text style={typography.micro}>YOUR DRAW</Text>
             <Die value={myDraw.diceRoll} />
           </View>
-          <Card id={myDraw.cardId} />
+          <Animated.View entering={ZoomIn.duration(450)}>
+            <Card id={myDraw.cardId} />
+          </Animated.View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <View style={styles.actions}>
             <Button
@@ -75,17 +84,21 @@ export function BuildingView() {
               style={{ flex: 1 }}
             />
           </View>
-        </View>
+        </Animated.View>
       ) : null}
 
-      <Text style={[typography.heading, { marginTop: spacing.md }]}>Players</Text>
-      {state.players.map((p) => (
-        <PlayerRow key={p.id} player={p} isYou={p.id === myPlayerId} />
+      <Text style={[typography.heading, { marginTop: spacing.md }]}>CHAMPIONS</Text>
+      <GoldDivider />
+      {state.players.map((p, i) => (
+        <Animated.View key={p.id} entering={FadeInDown.delay(i * 60).duration(300)}>
+          <PlayerRow player={p} isYou={p.id === myPlayerId} />
+        </Animated.View>
       ))}
 
       {me && me.hand && me.hand.length > 0 ? (
         <>
-          <Text style={[typography.heading, { marginTop: spacing.md }]}>Your hand</Text>
+          <Text style={[typography.heading, { marginTop: spacing.md }]}>YOUR ARSENAL</Text>
+          <GoldDivider />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hand}>
             {me.hand.map((id, i) => (
               <Card key={`${id}-${i}`} id={id} compact style={{ marginRight: spacing.xs }} />
@@ -99,17 +112,27 @@ export function BuildingView() {
 
 function PlayerRow({ player, isYou }: { player: VisiblePlayer; isYou: boolean }) {
   const p = player;
+  const pal = p.god ? godPalette[p.god] ?? godPalette.zeus! : godPalette.zeus!;
   return (
-    <View style={styles.playerCard}>
+    <View style={[styles.playerCard, elevation.low, { borderColor: pal.primary + "55" }]}>
       <View style={styles.playerHead}>
-        <Text style={styles.playerName}>
-          {p.name} {isYou ? "(you)" : ""}
-        </Text>
-        <Text style={typography.dim}>
-          {p.god ?? "?"} · {p.points} pts · hand {p.handSize}
-        </Text>
+        {p.god ? <GodPortrait god={p.god} size={44} /> : <View style={styles.portraitPlaceholder} />}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.playerName}>
+            {p.name}
+            {isYou ? " · you" : ""}
+          </Text>
+          <Text style={typography.dim}>
+            {(p.god ?? "—").toUpperCase()} · hand {p.handSize} · {p.points} pts
+          </Text>
+        </View>
       </View>
-      <StatBar value={Math.max(0, p.stats.health)} max={p.maxHealth || 1} label="HP" />
+      <StatBar
+        value={Math.max(0, p.stats.health)}
+        max={p.maxHealth || 1}
+        label="HP"
+        accent={pal.primary}
+      />
       <StatusBadges statuses={p.statuses} />
     </View>
   );
@@ -118,30 +141,55 @@ function PlayerRow({ player, isYou }: { player: VisiblePlayer; isYou: boolean })
 const styles = StyleSheet.create({
   root: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
   topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  turnBanner: {
-    backgroundColor: colors.bgElev,
-    padding: spacing.sm,
-    borderRadius: radii.sm,
+  deckPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: "center",
+  },
+  turnBanner: {
+    backgroundColor: "rgba(227,179,74,0.08)",
+    borderRadius: radii.md,
+    padding: spacing.sm,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.accentDark + "55",
   },
   drawSection: {
     padding: spacing.md,
-    borderRadius: radii.md,
-    backgroundColor: colors.bgElev,
-    gap: spacing.sm,
+    borderRadius: radii.lg,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.md,
+    alignItems: "center",
   },
-  diceRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-  actions: { flexDirection: "row", gap: spacing.sm },
+  drawHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    width: "100%",
+    justifyContent: "space-between",
+  },
+  actions: { flexDirection: "row", gap: spacing.sm, width: "100%" },
   playerCard: {
     padding: spacing.md,
     borderRadius: radii.md,
-    backgroundColor: colors.bgElev,
+    backgroundColor: "rgba(255,255,255,0.03)",
     borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
-  playerHead: { flexDirection: "row", justifyContent: "space-between" },
-  playerName: { color: colors.text, fontSize: 15, fontWeight: "700" },
-  hand: { gap: spacing.xs },
+  playerHead: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  portraitPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.bgElev,
+  },
+  playerName: { color: colors.text, fontSize: 15, fontFamily: typography.heading.fontFamily },
+  hand: { gap: spacing.xs, paddingVertical: spacing.xs },
   error: { color: colors.danger, fontSize: 13 },
 });

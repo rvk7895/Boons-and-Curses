@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, radii, spacing } from "../ui/theme";
+import { colors, radii, spacing, typography } from "../ui/theme";
 
 type Entry = { id: string; name: string; active: boolean; eliminated: boolean };
 
@@ -16,7 +16,7 @@ export function TurnQueue({ entries }: { entries: Entry[] }) {
           ]}
         >
           <Text style={[styles.text, e.active && { color: colors.accentText }]}>
-            {i + 1}. {e.name}
+            {i + 1} · {e.name}
           </Text>
         </View>
       ))}
@@ -29,12 +29,12 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
+    borderRadius: radii.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.bgElev,
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
-  active: { backgroundColor: colors.accent, borderColor: colors.accent },
-  eliminated: { opacity: 0.4 },
-  text: { color: colors.text, fontSize: 12, fontWeight: "600" },
+  active: { backgroundColor: colors.accent, borderColor: colors.accentHi },
+  eliminated: { opacity: 0.35 },
+  text: { color: colors.text, fontSize: 12, fontFamily: typography.heading.fontFamily, letterSpacing: 0.5 },
 });
