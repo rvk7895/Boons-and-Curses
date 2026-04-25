@@ -244,6 +244,12 @@ cmd_balance() {
   pnpm --filter @bc/simulator run balance "$@"
 }
 
+cmd_report() {
+  shift || true
+  pnpm --filter @bc/simulator build >/dev/null
+  pnpm --filter @bc/simulator run report "$@" --out "$ROOT_DIR/Docs/design/05-current-metrics.md"
+}
+
 cmd_db() {
   ensure_postgres
   ensure_db
@@ -300,6 +306,7 @@ main() {
     mobile)                  cmd_mobile ;;
     sim)                     cmd_sim "$@" ;;
     balance)                 cmd_balance "$@" ;;
+    report)                  cmd_report "$@" ;;
     db)                      cmd_db ;;
     dev)                     cmd_dev ;;
     clean)                   cmd_clean ;;

@@ -10,6 +10,7 @@
     "sim": "node dist/index.js",
     "balance": "node dist/balance.js",
     "analyze": "node dist/cardAnalysis.js",
+    "report": "node dist/metricsReport.js",
     "dev": "tsx src/index.ts",
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
