@@ -121,3 +121,57 @@ describe("building phase", () => {
     expect(drawnCard).toBeDefined();
   });
 });
+
+describe("fighting phase end conditions", () => {
+  it("ends by HP when all alive players run out of attack cards", () => {
+    const state = createGame("drought", [
+      { id: "a", name: "A" },
+      { id: "b", name: "B" },
+    ]);
+    applyAction(state, { kind: "selectGod", playerId: "a", god: "zeus" });
+    applyAction(state, { kind: "selectGod", playerId: "b", god: "hades" });
+
+    let safety = 5000;
+    while (state.phase !== "ended" && safety-- > 0) {
+      const activeId = state.turnOrder[state.activePlayerIdx];
+      if (!activeId) break;
+      const actions = legalActions(state, activeId);
+      if (actions.length === 0) break;
+      applyAction(state, actions[0]!);
+    }
+
+    expect(state.phase).toBe("ended");
+    expect(state.winner).not.toBeNull();
+    expect(safety).toBeGreaterThan(0);
+  });
+
+  it("clears empty hands without infinite passing", () => {
+    const state = createGame("drought2", [
+      { id: "a", name: "A" },
+      { id: "b", name: "B" },
+    ]);
+    applyAction(state, { kind: "selectGod", playerId: "a", god: "zeus" });
+    applyAction(state, { kind: "selectGod", playerId: "b", god: "hades" });
+
+    while (state.phase !== "fighting" && state.phase !== "ended") {
+      const activeId = state.turnOrder[state.activePlayerIdx];
+      if (!activeId) break;
+      const actions = legalActions(state, activeId);
+      if (actions.length === 0) break;
+      const discard = actions.find((a) => a.kind === "resolveDraw" && !a.keep) ?? actions[0]!;
+      applyAction(state, discard);
+    }
+    if (state.phase !== "fighting") return;
+
+    let passes = 0;
+    while (state.phase === "fighting" && passes < 20) {
+      const activeId = state.turnOrder[state.activePlayerIdx]!;
+      const acts = legalActions(state, activeId);
+      const pass = acts.find((a) => a.kind === "passFightingTurn");
+      if (!pass) break;
+      applyAction(state, pass);
+      passes += 1;
+    }
+    expect(state.phase).toBe("ended");
+  });
+});

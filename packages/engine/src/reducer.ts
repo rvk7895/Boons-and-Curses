@@ -234,6 +234,10 @@ function enterFighting(state: GameState, rng: Rng, events: GameEvent[]): void {
   state.turnOrder = computeFightingTurnOrder(state.players);
   state.activePlayerIdx = 0;
   events.push({ kind: "phaseChanged", phase: "fighting", round: 1 });
+  if (allAliveHandsEmpty(state)) {
+    finalizeByHealth(state, events);
+    return;
+  }
   advanceToActionableFighter(state, rng, events, true);
 }
 
@@ -293,7 +297,17 @@ function advanceFighting(state: GameState, rng: Rng, events: GameEvent[]): void 
     finalizeByHealth(state, events);
     return;
   }
+  if (allAliveHandsEmpty(state)) {
+    finalizeByHealth(state, events);
+    return;
+  }
   advanceToActionableFighter(state, rng, events, false);
+}
+
+function allAliveHandsEmpty(state: GameState): boolean {
+  const alive = state.players.filter((p) => p.alive);
+  if (alive.length === 0) return true;
+  return alive.every((p) => p.hand.length === 0);
 }
 
 function advanceToActionableFighter(
