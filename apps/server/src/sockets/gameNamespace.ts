@@ -108,23 +108,48 @@ async function handleJoinRoom(
     rt.state = room.snapshots[0].state as unknown as Parameters<typeof filterStateFor>[0];
   }
 
+  const roomShape = serializeRoomShape(room);
+
   respond(ack, {
     ok: true,
     youAre: { playerId: membership.playerId, role: membership.role },
-    room: {
-      id: room.id,
-      code: room.code,
-      status: room.status,
-      adminId: room.adminId,
-      members: room.memberships.map((m: { userId: string; playerId: string; role: string; user: { displayName: string } }) => ({
-        userId: m.userId,
-        playerId: m.playerId,
-        role: m.role,
-        displayName: m.user.displayName,
-      })),
-    },
+    room: roomShape,
     state: rt.state ? filterStateFor(rt.state, membership.playerId) : null,
   });
+
+  io.to(roomChannel(code)).emit("roomUpdate", { room: roomShape });
+}
+
+type SerializableRoom = {
+  id: string;
+  code: string;
+  status: string;
+  adminId: string;
+  maxPlayers: number;
+  memberships: Array<{
+    id: string;
+    userId: string;
+    playerId: string;
+    role: string;
+    user: { displayName: string };
+  }>;
+};
+
+function serializeRoomShape(room: SerializableRoom) {
+  return {
+    id: room.id,
+    code: room.code,
+    status: room.status,
+    adminId: room.adminId,
+    maxPlayers: room.maxPlayers,
+    members: room.memberships.map((m) => ({
+      id: m.id,
+      userId: m.userId,
+      playerId: m.playerId,
+      role: m.role,
+      displayName: m.user.displayName,
+    })),
+  };
 }
 
 async function handleStartGame(

@@ -82,6 +82,21 @@ describe("socket game flow", () => {
     client.close();
   });
 
+  it("broadcasts roomUpdate to existing members when a new socket joins", async () => {
+    const { code, aliceToken, bobToken } = await setupRoom();
+    const alice = await connectClient(app.server.address(), aliceToken);
+    await emitAck(alice, "joinRoom", { code });
+
+    const aliceSawUpdate = waitFor<{ room: { members: unknown[] } }>(alice, "roomUpdate");
+    const bob = await connectClient(app.server.address(), bobToken);
+    await emitAck(bob, "joinRoom", { code });
+
+    const update = await aliceSawUpdate;
+    expect(update.room.members).toHaveLength(2);
+    alice.close();
+    bob.close();
+  });
+
   it("startGame transitions room to PLAYING and broadcasts state", async () => {
     const { code, aliceToken, bobToken } = await setupRoom();
     const alice = await connectClient(app.server.address(), aliceToken);

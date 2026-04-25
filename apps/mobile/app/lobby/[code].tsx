@@ -51,12 +51,17 @@ export default function Lobby() {
         router.replace(`/game/${code}`);
       }
     };
+    const onRoomUpdate = (payload: { room: typeof room }) => {
+      if (payload.room) setRoom(payload.room);
+    };
     socket.on("stateUpdate", onState);
+    socket.on("roomUpdate", onRoomUpdate);
 
     emitWithAck<{
       ok: boolean;
       youAre?: { playerId: string; role: "PLAYER" | "SPECTATOR" };
       state?: VisibleGameState | null;
+      room?: typeof room;
       error?: string;
     }>(socket, "joinRoom", { code })
       .then((res) => {
@@ -65,6 +70,7 @@ export default function Lobby() {
           return;
         }
         if (res.youAre) setYouAre(res.youAre.playerId, res.youAre.role);
+        if (res.room) setRoom(res.room);
         if (res.state) {
           setGameState(res.state);
           if (res.state.phase !== "lobby" && res.state.phase !== "ended") {
@@ -76,8 +82,9 @@ export default function Lobby() {
 
     return () => {
       socket.off("stateUpdate", onState);
+      socket.off("roomUpdate", onRoomUpdate);
     };
-  }, [token, code, setGameState, setYouAre, loadRoom, router]);
+  }, [token, code, setGameState, setYouAre, setRoom, loadRoom, router]);
 
   async function handleStart() {
     const socket = getSocket();
